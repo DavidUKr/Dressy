@@ -85,3 +85,6 @@ https://www.figma.com/design/WGOslAQ9m63XhRCnfnlPel/Dressy-Wireframe?node-id=0-1
     - postReview
     - getReview (get by id etc) 
     - deleteReview
+
+##Databse schema
+https://www.figma.com/board/Gmzu1WpMUUEKuzdzll26KM/Dressy-DB-schema?node-id=0-1&node-type=canvas&t=ZZZwq4eKuNAXttx7-0
