@@ -61,10 +61,27 @@ As the app dev and I want to receive user feedback on ai generations.
     - textbox
     - save reviews to database
     - build review viewing page
-
+  
 
 ## High-level Architecture
 https://www.figma.com/board/vjOqurIxbn1jn9veD8VGMz/Dressy-Sys-Arch?node-id=0-1&node-type=canvas&t=KnRaNjRXodFFQzP1-0
 
 ## Wireframe
 https://www.figma.com/design/WGOslAQ9m63XhRCnfnlPel/Dressy-Wireframe?node-id=0-1&node-type=canvas&t=gQ38vqrrQpey1mpl-0
+
+## Endpoints
+
+UserController:
+    -registeruser
+    -getuser
+    -deleteUser
+    -getuserbyId
+    -updateUser
+GenerationController:
+    -getgeneration(salveaza automat poza) 
+    -saveGeneration
+    -deleteGeneration?
+ReviewController:
+    -postReview
+    -getReview (get by id etc) 
+    -deleteReview
