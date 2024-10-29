@@ -42,7 +42,7 @@ As the app dev and I want to receive user feedback on ai generations.
     - Outsource some service
 - Upload image with a clothing article
     - Implement upload box/button
-    - Implement uploading mechanism - local file storage
+    - Implement uploading mechanism
 - Get generated images with matching clothes
     - Implement AI prompting and response generation
     - Display generation
