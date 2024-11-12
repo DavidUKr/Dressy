@@ -72,18 +72,25 @@ https://www.figma.com/design/WGOslAQ9m63XhRCnfnlPel/Dressy-Wireframe?node-id=0-1
 ## Endpoints
 
 - UserController:
-    - registerUser
     - getUser
     - deleteUser
     - geUserbyId
     - updateUser
+- LoginController
+    - Get token
+- SignupController:
+    - registerUser
 - GenerationController:
-    - getGeneration (salveaza automat poza) 
-    - saveGeneration
+    - getGeneration
     - deleteGeneration?
+- SavedImagesController:
+    - SaveImage
+    - getImagesById
+    - getImagesByUserId
+    - deleteImage
 - ReviewController:
     - postReview
-    - getReview (get by id etc) 
+    - getReview
     - deleteReview
 
 ##Databse schema
