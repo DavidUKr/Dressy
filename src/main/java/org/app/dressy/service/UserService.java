@@ -5,6 +5,8 @@ import org.app.dressy.repo.UserRepo;
 import org.app.dressy.utils.UserUtil;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -14,5 +16,14 @@ public class UserService {
 
     public UserDTO getUserById(String id) {
         return userUtil.patchDTOfromUser(userRepo.findById(id).orElse(null));
+    }
+
+    public List<UserDTO> getAllUsers() {
+    }
+
+    public void deleteUser(String id) {
+    }
+
+    public UserDTO updateUser(String id, UserDTO userDTO) {
     }
 }
