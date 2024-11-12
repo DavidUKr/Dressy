@@ -11,9 +11,11 @@ public class ImageService {
     }
 
     public ImageDTO getImageById(String id) {
+        return null;
     }
 
     public List<ImageDTO> getImagesByUserId(String userId) {
+        return null;
     }
 
     public void deleteImage(String id) {

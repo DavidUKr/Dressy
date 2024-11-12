@@ -19,11 +19,13 @@ public class UserService {
     }
 
     public List<UserDTO> getAllUsers() {
+        return null;
     }
 
     public void deleteUser(String id) {
     }
 
     public UserDTO updateUser(String id, UserDTO userDTO) {
+        return null;
     }
 }
