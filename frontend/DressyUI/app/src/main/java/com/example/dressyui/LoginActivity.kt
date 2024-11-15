@@ -1,7 +1,10 @@
 package com.example.dressyui
 
+import LoginRequest
+import LoginResponse
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -23,15 +26,35 @@ class LoginActivity : ComponentActivity() {
             DressyUITheme {
                 LoginScreen(
                     onLoginClick = { username, password ->
-                        if (username == "user" && password == "pass") {
-                            // Successful login handling
-                        } else {
-                            // Handle login failure
-                        }
+                        val request = LoginRequest(username, password)
+
+                        ApiClient.authService.login(request).enqueue(object : retrofit2.Callback<LoginResponse> {
+                            override fun onResponse(
+                                call: retrofit2.Call<LoginResponse>,
+                                response: retrofit2.Response<LoginResponse>
+                            ) {
+                                if (response.isSuccessful) {
+                                    val loginResponse = response.body()
+                                    loginResponse?.let {
+                                        Toast.makeText(this@LoginActivity, "Login Successful: ${it.message}", Toast.LENGTH_LONG).show()
+                                        // Navigate to Main Screen or handle token
+                                    }
+                                } else {
+                                    Toast.makeText(this@LoginActivity, "Login Failed: ${response.message()}", Toast.LENGTH_LONG).show()
+                                }
+                            }
+
+                            override fun onFailure(call: retrofit2.Call<LoginResponse>, t: Throwable) {
+                                Toast.makeText(this@LoginActivity, "Error: ${t.message}", Toast.LENGTH_LONG).show()
+                            }
+                        })
                     },
                     onBackClick = {
                         startActivity(Intent(this, MainActivity::class.java))
                         finish()
+                    },
+                    onSignUpClick = {
+                        startActivity(Intent(this, SignUpActivity::class.java)) // Navigate to SignUpActivity
                     }
                 )
             }
@@ -40,7 +63,11 @@ class LoginActivity : ComponentActivity() {
 }
 
 @Composable
-fun LoginScreen(onLoginClick: (String, String) -> Unit, onBackClick: () -> Unit) {
+fun LoginScreen(
+    onLoginClick: (String, String) -> Unit,
+    onBackClick: () -> Unit,
+    onSignUpClick: () -> Unit // Add this line
+) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -50,9 +77,14 @@ fun LoginScreen(onLoginClick: (String, String) -> Unit, onBackClick: () -> Unit)
             .background(Color(0xFFF8EDEB))
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally    ) {
-        Text(text = "Login", color = Color(0xFFFEC5BB),
-            fontWeight = FontWeight.Bold, fontSize = 24.sp)
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Login",
+            color = Color(0xFFFEC5BB),
+            fontWeight = FontWeight.Bold,
+            fontSize = 31.sp
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -83,8 +115,14 @@ fun LoginScreen(onLoginClick: (String, String) -> Unit, onBackClick: () -> Unit)
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Back to Main button
         Button(onClick = onBackClick) {
             Text(text = "Back to Main")
+        }
+
+        // Sign Up button
+        TextButton(onClick = onSignUpClick) {  // Update this line
+            Text(text = "Don't have an account? Sign Up")
         }
     }
 }

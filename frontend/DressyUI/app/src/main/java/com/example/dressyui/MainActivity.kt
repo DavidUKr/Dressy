@@ -48,7 +48,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
@@ -61,6 +60,7 @@ fun MainScreen() {
         }
     )
     var menuExpanded by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -128,7 +128,6 @@ fun MainScreen() {
                             }
                         )
                     }
-
                 }
             )
         },
@@ -138,14 +137,13 @@ fun MainScreen() {
                     .fillMaxSize()
                     .background(Color(0xFFF8EDEB))
                     .padding(padding),
-                contentAlignment = Alignment.Center
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    verticalArrangement = Arrangement.Top,  // Align content to the top
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 40.dp)
+                        .padding(top = 20.dp) 
                 ) {
 
                     Text(
@@ -154,6 +152,8 @@ fun MainScreen() {
                         color = Color(0xFFFEC5BB),
                         fontWeight = FontWeight.Bold
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Display the selected image or a placeholder if none selected
                     Image(
@@ -169,11 +169,13 @@ fun MainScreen() {
                         contentScale = ContentScale.Crop
                     )
 
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Button(
                         onClick = { /* Action to generate */ },
                         modifier = Modifier.fillMaxWidth(0.5f)
                     ) {
-                        Text(text = "GENERATE",  fontSize = 16.sp)
+                        Text(text = "GENERATE", fontSize = 16.sp)
                     }
                 }
             }
