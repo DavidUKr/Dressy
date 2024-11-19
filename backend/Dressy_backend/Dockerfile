@@ -5,4 +5,4 @@ RUN mvn clean package -DskipTests
 FROM openjdk:17.0.1-jdk-slim
 COPY --from=build /target/dressy-0.0.1-SNAPSHOT.jar dressy.jar
 EXPOSE 8080
-ENTRYPOINT["java","-jar","dressy.jar"]
+ENTRYPOINT ["java", "-jar", "dressy.jar"]
