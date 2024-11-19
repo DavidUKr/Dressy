@@ -3,6 +3,7 @@ package com.example.dressyui
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -52,14 +53,21 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen() {
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var showGeneratedImages by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
             selectedImageUri = uri
         }
     )
-    var menuExpanded by remember { mutableStateOf(false) }
+
+    val sampleImages = listOf(
+        R.drawable.outfit1,
+        R.drawable.outfit2,
+        R.drawable.outfit3
+    )
 
     Scaffold(
         topBar = {
@@ -98,6 +106,8 @@ fun MainScreen() {
                             contentScale = ContentScale.Crop
                         )
                     }
+
+                    var menuExpanded by remember { mutableStateOf(false) }
 
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(
@@ -140,12 +150,11 @@ fun MainScreen() {
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Top,  // Align content to the top
+                    verticalArrangement = Arrangement.Top,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 20.dp) 
+                        .padding(top = 20.dp)
                 ) {
-
                     Text(
                         text = "Select Image",
                         fontSize = 27.sp,
@@ -155,7 +164,6 @@ fun MainScreen() {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Display the selected image or a placeholder if none selected
                     Image(
                         painter = if (selectedImageUri != null) {
                             rememberAsyncImagePainter(selectedImageUri)
@@ -172,15 +180,89 @@ fun MainScreen() {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = { /* Action to generate */ },
+                        onClick = { showGeneratedImages = true },
                         modifier = Modifier.fillMaxWidth(0.5f)
                     ) {
                         Text(text = "GENERATE", fontSize = 16.sp)
+                    }
+
+                    if (showGeneratedImages) {
+                        GeneratedImagesSection(
+                            sampleImages = sampleImages,
+                            context = context
+                        )
                     }
                 }
             }
         }
     )
+}
+
+@Composable
+fun GeneratedImagesSection(sampleImages: List<Int>, context: android.content.Context) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Generated Outfits",
+            fontSize = 20.sp,
+            color = Color(0xFFFEC5BB),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(vertical = 16.dp)
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            sampleImages.forEach { imageRes ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(vertical = 8.dp)
+                        .fillMaxWidth()
+                ) {
+                    Image(
+                        painter = painterResource(id = imageRes),
+                        contentDescription = "Generated Outfit",
+                        modifier = Modifier
+                            .size(100.dp)
+                            .padding(end = 16.dp)
+                            .background(Color.Gray),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Button(
+                        onClick = {
+                            saveImageToGallery(context, imageRes)
+                            Toast.makeText(context, "Image saved!", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier
+                    ) {
+                        Text(text = "Save")
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun saveImageToGallery(context: android.content.Context, imageRes: Int) {
+    val drawable = context.resources.getDrawable(imageRes, null)
+    val bitmap = (drawable as android.graphics.drawable.BitmapDrawable).bitmap
+
+    val savedUri = MediaStore.Images.Media.insertImage(
+        context.contentResolver,
+        bitmap,
+        "outfit",
+        "Generated outfit by Dressy"
+    )
+
+    if (savedUri == null) {
+        Toast.makeText(context, "Failed to save image", Toast.LENGTH_SHORT).show()
+    }
 }
 
 @Preview(showBackground = true)

@@ -37,7 +37,7 @@ class LoginActivity : ComponentActivity() {
                                     val loginResponse = response.body()
                                     loginResponse?.let {
                                         Toast.makeText(this@LoginActivity, "Login Successful: ${it.message}", Toast.LENGTH_LONG).show()
-                                        // Navigate to Main Screen or handle token
+
                                     }
                                 } else {
                                     Toast.makeText(this@LoginActivity, "Login Failed: ${response.message()}", Toast.LENGTH_LONG).show()
@@ -66,7 +66,7 @@ class LoginActivity : ComponentActivity() {
 fun LoginScreen(
     onLoginClick: (String, String) -> Unit,
     onBackClick: () -> Unit,
-    onSignUpClick: () -> Unit // Add this line
+    onSignUpClick: () -> Unit
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -121,7 +121,7 @@ fun LoginScreen(
         }
 
         // Sign Up button
-        TextButton(onClick = onSignUpClick) {  // Update this line
+        TextButton(onClick = onSignUpClick) {
             Text(text = "Don't have an account? Sign Up")
         }
     }

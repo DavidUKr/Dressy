@@ -41,7 +41,6 @@ class SignUpActivity : ComponentActivity() {
                                             "Signup Successful: ${it.message}",
                                             Toast.LENGTH_LONG
                                         ).show()
-                                        // Optionally navigate to Login screen
                                         startActivity(Intent(this@SignUpActivity, LoginActivity::class.java))
                                         finish()
                                     }
