@@ -115,11 +115,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Back to Main button
-        Button(onClick = onBackClick) {
-            Text(text = "Back to Main")
-        }
-
         // Sign Up button
         TextButton(onClick = onSignUpClick) {
             Text(text = "Don't have an account? Sign Up")

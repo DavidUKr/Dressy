@@ -36,6 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.dressyui.ui.theme.DressyUITheme
 
@@ -44,23 +47,52 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DressyUITheme {
-                MainScreen()
+                AppNavigation()
             }
         }
     }
 }
+@Composable
+fun AppNavigation() {
+    val context = LocalContext.current
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "landing") {
+        composable("landing") {
+            LandingScreen(
+                onNavigateToLogin = {
+                    // Navigate to LoginActivity using Intent
+                    val intent = Intent(context, LoginActivity::class.java)
+                    context.startActivity(intent)
+                },
+                onNavigateToSignup = {
+                    // Navigate to SignUpActivity using Intent
+                    val intent = Intent(context, SignUpActivity::class.java)
+                    context.startActivity(intent)
+                }
+            )
+        }
+        // Since LoginActivity and SignUpActivity are separate activities,
+        // no need to handle navigation here with NavController
+        composable("main") {
+            MainScreen()
+        }
+    }
+}
+
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showGeneratedImages by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val navController = rememberNavController() // Use this navController to navigate
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
-        onResult = { uri: Uri? ->
-            selectedImageUri = uri
-        }
+        onResult = { uri: Uri? -> selectedImageUri = uri }
     )
 
     val sampleImages = listOf(
@@ -96,7 +128,7 @@ fun MainScreen() {
                 actions = {
                     IconButton(
                         onClick = {
-                            context.startActivity(Intent(context, LoginActivity::class.java))
+                            navController.navigate("login") // Use navigation here
                         }
                     ) {
                         Image(
@@ -197,6 +229,7 @@ fun MainScreen() {
         }
     )
 }
+
 
 @Composable
 fun GeneratedImagesSection(sampleImages: List<Int>, context: android.content.Context) {
