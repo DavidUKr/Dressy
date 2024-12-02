@@ -22,7 +22,7 @@ fun LandingScreen(onNavigateToLogin: () -> Unit, onNavigateToSignup: () -> Unit)
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        // Fullscreen Rocket Image
+
         Image(
             painter = painterResource(id = R.drawable.landing),
             contentDescription = "Rocket Image",

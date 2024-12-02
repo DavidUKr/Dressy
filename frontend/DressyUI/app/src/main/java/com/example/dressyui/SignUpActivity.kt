@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -14,6 +15,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,8 +28,8 @@ class SignUpActivity : ComponentActivity() {
         setContent {
             DressyUITheme {
                 SignUpScreen(
-                    onSignUpClick = { username, password, email ->
-                        val request = SignupRequest(username, password, email)
+                    onSignUpClick = { username, email, password ->
+                        val request = SignupRequest(username, email, password)
 
                         ApiClient.authService.signup(request).enqueue(object : retrofit2.Callback<SignupResponse> {
                             override fun onResponse(
@@ -77,63 +80,91 @@ fun SignUpScreen(onSignUpClick: (String, String,String) -> Unit, onBackClick: ()
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    Column(
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8EDEB))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Sign Up",
-            color = Color(0xFFFEC5BB),
-            fontWeight = FontWeight.Bold,
-            fontSize = 31.sp
+
+        Image(
+            painter = painterResource(id = R.drawable.login_image),
+            contentDescription = "Background Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
         )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Sign Up",
+                color = Color(0xFFE27239),
+                fontWeight = FontWeight.Bold,
+                fontSize = 31.sp
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Username input field
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Username") },
-            modifier = Modifier.fillMaxWidth()
-        )
+            // Username input field
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Username") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        //Email
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
-        )
+            //Email
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        // Password input field
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth()
-        )
+            // Password input field
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Sign Up Button
-        Button(onClick = { onSignUpClick(username, password, email) }) {
-            Text(text = "Sign Up")
-        }
+            // Sign Up Button
+            Button(
+                onClick = { onSignUpClick(username, email, password)},
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFD7A685),
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(vertical = 8.dp),
+                ) {
+                Text(text = "Sign Up", fontSize = 18.sp)
+            }
 
-        Spacer(modifier = Modifier.height(8.dp))
 
-        // Back to Login button
-        TextButton(onClick = onBackClick) {
-            Text(text = "Already have an account? Login")
+            // Back to Login button
+            TextButton(
+                onClick = onBackClick,
+                colors = ButtonDefaults.textButtonColors(
+                    containerColor = Color(0xFFD7A685),
+                    contentColor = Color.White
+                ),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .padding(vertical = 16.dp), ) {
+                Text(text = "Already have an account? Login",fontSize = 16.sp)
+            }
         }
     }
 }
