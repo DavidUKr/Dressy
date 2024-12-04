@@ -32,8 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(request -> {
                     request.requestMatchers("/api/v*/auth/authenticate").permitAll();
                     request.requestMatchers("/api/v*/auth/register").permitAll();
-                    request.requestMatchers("/swagger-ui.html").permitAll();
-                    request.requestMatchers("/api-docs.yaml").permitAll();
+                    request.requestMatchers("/swagger-ui/**").permitAll();
                     request.anyRequest().authenticated();
                 })
                 .sessionManagement(session -> session
