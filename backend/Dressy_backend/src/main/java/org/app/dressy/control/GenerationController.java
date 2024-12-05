@@ -24,6 +24,6 @@ public class GenerationController {
 
     @GetMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Image> getGenerationImage(@RequestBody GenQueryDTO genQueryDTO) {
-        return ResponseEntity.ok(new Image());
+        return generationService.getGenerationImage(genQueryDTO);
     }
 }
