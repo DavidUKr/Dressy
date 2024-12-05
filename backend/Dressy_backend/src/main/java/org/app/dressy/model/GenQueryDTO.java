@@ -4,4 +4,7 @@ import lombok.Data;
 
 @Data
 public class GenQueryDTO {
+
+    String query;
+    String style;
 }
