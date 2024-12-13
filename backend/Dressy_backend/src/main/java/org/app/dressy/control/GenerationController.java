@@ -17,13 +17,8 @@ public class GenerationController {
     private final GenerationService generationService;
 
     // Get a generation by ID
-<<<<<<< HEAD
-    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public GenerationDTO getGenerationById(@PathVariable("id") String id) {
-=======
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public GenerationDTO getGeneration(@RequestBody String id) {
->>>>>>> 2492b45 (base generation)
         return generationService.getGenerationById(id);
     }
 
