@@ -1,9 +1,8 @@
 package org.app.dressy.control;
 
 import lombok.RequiredArgsConstructor;
-import org.app.dressy.model.GenQueryDTO;
+import org.app.dressy.model.QueryDTO;
 import org.app.dressy.model.GenerationDTO;
-import org.app.dressy.model.Image;
 import org.app.dressy.service.GenerationService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,13 +16,13 @@ public class GenerationController {
     private final GenerationService generationService;
 
     // Get a generation by ID
-    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public GenerationDTO getGeneration(@RequestBody String id) {
+    @GetMapping(value = "/{gen_id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public GenerationDTO getGenerationById(@PathVariable String id) {
         return generationService.getGenerationById(id);
     }
 
-    @GetMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Image> getGenerationImage(@RequestBody GenQueryDTO genQueryDTO) {
-        return generationService.getGenerationImage(genQueryDTO);
+    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<GenerationDTO> getGenerationImages(@RequestBody QueryDTO queryDTO) {
+        return ResponseEntity.ok(generationService.getGenerationImages(queryDTO));
     }
 }

@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class QueryDTO {
-    private ImageDTO inputImage;
+    private String input_image;
     private String style;
-    private String userPrompt;
+    private String user_prompt;
+    private int results_count;
 }
