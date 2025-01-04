@@ -1,5 +1,6 @@
 package org.app.dressy.control;
 
+import com.mashape.unirest.http.exceptions.UnirestException;
 import lombok.RequiredArgsConstructor;
 import org.app.dressy.model.QueryDTO;
 import org.app.dressy.model.GenerationDTO;
@@ -22,7 +23,7 @@ public class GenerationController {
     }
 
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GenerationDTO> getGenerationImages(@RequestBody QueryDTO queryDTO) {
+    public ResponseEntity<GenerationDTO> getGenerationImages(@RequestBody QueryDTO queryDTO) throws UnirestException {
         return ResponseEntity.ok(generationService.getGenerationImages(queryDTO));
     }
 }
