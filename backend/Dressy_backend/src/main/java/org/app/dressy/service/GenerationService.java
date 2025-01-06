@@ -6,11 +6,10 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import org.app.dressy.config.OpenAiConfig;
 import org.app.dressy.model.QueryDTO;
 import org.app.dressy.model.GenerationDTO;
 import org.springframework.ai.image.Image;
-import org.springframework.ai.image.ImageModel;
-import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
 import org.springframework.stereotype.Service;
 
@@ -23,24 +22,23 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class GenerationService {
 
-    private final ImageModel imageModel;
-    @Value
-    private apiKey
+    private final OpenAiImageService openAiImageService;
+
 
     public GenerationDTO getGenerationById(String id) {
         return null;
     }
 
-    public GenerationDTO getGenerationImages(QueryDTO queryDTO) throws UnirestException {
+    public GenerationDTO getGenerationImages(QueryDTO queryDTO){
         String systemPromptPrefix= """
-                You are a dressing assistant which specializes in providing suggestions of outfits based on the PROVIDED IMAGE in base64 format of a clothing article. You MUST use the SAME EXACT clothing article from the PROVIDED IMAGE. 
+                You are a dressing assistant which specializes in providing suggestions of outfits based on the PROVIDED CLOTHING ARTICLE DESCRIPTION. You MUST use the SAME EXACT clothing article from the PROVIDED CLOTHING ARTICLE DESCRIPTION. 
                 You must respect the PROVIDED STYLE and suggest the outfit accordingly.
                 You must respect the USER NOTES if not empty when generating the outfit.
                 
                 PROVIDED STYLE:""";
-        String systemPromptPROVIDED_IMAGE= """
+        String systemPromptPROVIDED_CLOTHING_ARTICLE_DESCRIPTION= """
                 
-                PROVIDED IMAGE in base64 format:""";
+                PROVIDED CLOTHING ARTICLE DESCRIPTION:""";
         String systemPromptUSER_NOTES= """
                 
                 USER NOTES:""";
@@ -48,32 +46,19 @@ public class GenerationService {
                 
                 GENERATED OUTFIT BY DALL-E:""";
 
+        String description_prompt="Describe the clothing article presented in the image with great detail. The description must be detailed enough so when it is given to a model as a prompt it will generate exactly the same clothing article";
+
         String prompt=systemPromptPrefix
                 + queryDTO.getStyle()
-                + systemPromptPROVIDED_IMAGE
-                + queryDTO.getInput_image()
+                + systemPromptPROVIDED_CLOTHING_ARTICLE_DESCRIPTION
+                + openAiImageService.getImageDescription(queryDTO.getInput_image(), description_prompt)
                 + systemPromptUSER_NOTES
                 + queryDTO.getUser_prompt()
                 + systemPromptSuffix;
 
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.post("https://api.openai.com/v1/images/edits")
-                .header("Authorization", "Bearer ")
-                .field("file", new File("cmMtdXBsb2FkLTE2ODc4MzMzNDc3NTEtMjA=/31225951_59371037e9_small.png"))
-                .field("prompt", "A cute baby sea otter wearing a beret.")
-                .field("n", "2")
-                .field("size", "1024x1024")
-                .field("response_format", "url")
-                .field("user", "")
-                .asString();
-
-        return new GenerationDTO(response);
-    }
-
-    private String resolveImageContent(ImageResponse imageResponse) {
-        Image image = imageResponse.getResult().getOutput();
-        return Optional
-                .ofNullable(image.getB64Json())
-                .orElseGet(image::getUrl);
+        if (queryDTO.getResults_count()<=5)
+            return new GenerationDTO(openAiImageService.getImageGenerations(prompt,queryDTO.getResults_count()));
+        else
+            return new GenerationDTO(openAiImageService.getImageGenerations(prompt,3));
     }
 }
