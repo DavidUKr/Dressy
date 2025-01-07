@@ -2,18 +2,12 @@ package org.app.dressy.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.app.dressy.config.OpenAiConfig;
-import org.app.dressy.model.ImageDescriptionRequest;
 import org.springframework.ai.image.*;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.ai.image.ImageModel;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +18,6 @@ public class OpenAiImageService {
 
     private final OpenAiConfig openAiConfig;
     private final ImageModel imageModel;
-    private static final String OPENAI_VISION_API_URL = "https://api.openai.com/v1/chat/completions";
 
 
     public List<String> getImageGenerations(String prompt, int image_num){
@@ -41,43 +34,40 @@ public class OpenAiImageService {
 
         String json = """
                 {
-                    "model": "gpt-4o-mini",
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": [
+                       "model": "gpt-4o-mini",
+                       "messages": [
+                         {
+                           "role": "user",
+                           "content": [
                              {
-                                 "type": "text",
-                                 "text": "%s",
+                               "type": "text",
+                               "text": "Describe the clothing article in this image in great detail."
                              },
                              {
-                                 "type": "image_url",
-                                 "image_url": {"url": "data:image/jpeg;base64,%s"},
-                             },
-                         ],
-                        }
-                    ],
-                    "max_tokens": 300
-                }
-                """.formatted(description_prompt, base64_image);
+                               "type": "image_url",
+                               "image_url": {
+                                 "url": "data:image/jpeg;base64,%s"
+                                 }
+                             }
+                           ]
+                         }
+                       ],
+                       "max_tokens": 300
+                     }
+                """.formatted(base64_image);
 
-        ImageDescriptionRequest request;
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            request = mapper.readValue(json, ImageDescriptionRequest.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Composing description request failed";
-        }
-        // Call the OpenAI API and get the response
         RestTemplate restTemplate = new RestTemplate();
+
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + openAiConfig.getApiKey());
-        headers.set("Content-Type", "application/json");
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer "+openAiConfig.getApiKey());
 
-        HttpEntity<ImageDescriptionRequest> entity = new HttpEntity<>(request, headers);
-        ResponseEntity<String> response = restTemplate.exchange(OPENAI_VISION_API_URL, HttpMethod.POST, entity, String.class);
+        // Create the HTTP entity (request body + headers)
+        HttpEntity<String> request = new HttpEntity<>(json, headers);
 
+        // Send the POST request
+        String url = "https://api.openai.com/v1/chat/completions";
+        ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
         // Parse the response to extract the description
         try {
             ObjectMapper objectMapper = new ObjectMapper();

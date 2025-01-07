@@ -2,7 +2,6 @@ package org.app.dressy.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-
 import java.util.List;
 
 @Data
@@ -15,7 +14,7 @@ public class ImageDescriptionRequest {
 
     public static class Message {
         public String role;
-        public Content content;
+        public List<Content> content;
     }
 
     public static class Content {
