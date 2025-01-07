@@ -23,7 +23,7 @@ public class GenerationController {
     }
 
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GenerationDTO> getGenerationImages(@RequestBody QueryDTO queryDTO) throws UnirestException {
+    public ResponseEntity<GenerationDTO> getGenerationImages(@RequestBody QueryDTO queryDTO){
         return ResponseEntity.ok(generationService.getGenerationImages(queryDTO));
     }
 }
