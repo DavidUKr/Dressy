@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.dressyui
 
 import LoginRequest
@@ -11,34 +13,38 @@ import retrofit2.Callback
 import retrofit2.Response
 
 object AuthManager {
+    interface AuthCallback {
+        fun onSuccess(token: String)
+        fun onFailure(errorMessage: String)
+    }
 
-    fun loginUser(context: Context, username: String, password: String) {
+    fun loginUser(context: Context, username: String, password: String, callback: AuthCallback) {
         val loginRequest = LoginRequest(username, password)
         ApiClient.authService.login(loginRequest).enqueue(object : Callback<LoginResponse> {
             override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                 if (response.isSuccessful) {
                     val token = response.body()?.token
-                    if (token != null) {
-                        // Save token to SharedPreferences
+                    if (!token.isNullOrEmpty()) {
+                        // Save token securely
                         val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-                        val editor = sharedPreferences.edit()
-                        editor.putString("jwt_token", token)
-                        editor.apply()
+                        sharedPreferences.edit().putString("jwt_token", token).apply()
 
-                        Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
+                        // Notify success
+                        callback.onSuccess(token)
                     } else {
-                        Toast.makeText(context, "Failed to retrieve token.", Toast.LENGTH_SHORT).show()
+                        callback.onFailure("Failed to retrieve token.")
                     }
                 } else {
-                    Toast.makeText(context, "Login failed: ${response.message()}", Toast.LENGTH_SHORT).show()
+                    callback.onFailure("Login failed: ${response.message()}")
                 }
             }
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                Toast.makeText(context, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                callback.onFailure("Error: ${t.message}")
             }
         })
     }
+}
 
     fun fetchProtectedData(context: Context) {
         val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
@@ -68,4 +74,3 @@ object AuthManager {
         })
     }
 
-}
