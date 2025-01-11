@@ -14,4 +14,11 @@ public class UserAdvice {
     String userNotFoundHandler(UserNotFoundException e){
         return e.getMessage();
     }
+
+    @ResponseBody
+    @ExceptionHandler(ImageNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    String imageNotFoundHandler(ImageNotFoundException e){
+        return e.getMessage();
+    }
 }

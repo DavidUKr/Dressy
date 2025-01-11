@@ -86,7 +86,7 @@ public class OpenAiImageService {
     private String resolveImageContent(ImageResponse imageResponse) {
         Image image = imageResponse.getResult().getOutput();
         return Optional
-                .ofNullable(image.getUrl())
-                .orElseGet(image::getB64Json);
+                .ofNullable(image.getB64Json())
+                .orElseGet(image::getUrl);
     }
 }

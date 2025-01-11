@@ -24,15 +24,20 @@ public class ImageController {
     }
 
     // Get image by image ID
-    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ImageDTO getImageById(@PathVariable("id") String id) {
+    @GetMapping(value = "/id", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ImageDTO getImageById(@RequestParam String id) {
         return imageService.getImageById(id);
     }
 
     // Get images by user ID
-    @GetMapping(value = "/user/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<ImageDTO> getImagesByUserId(@PathVariable("userId") String userId) {
-        return imageService.getImagesByUserId(userId);
+    @GetMapping(value = "/user", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<ImageDTO> getImagesByUserId(@RequestParam String username) {
+        return imageService.getImagesByUsername(username);
+    }
+
+    @GetMapping(value = "/style", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<ImageDTO>> getImagesByStyle(@RequestParam String style) {
+        return ResponseEntity.ok(imageService.getImagesByStyle(style));
     }
 
     // Delete an image by ID
