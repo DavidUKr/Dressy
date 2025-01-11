@@ -29,24 +29,38 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lint.kotlin.metadata.Visibility
 import com.example.dressyui.ui.theme.DressyUITheme
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             DressyUITheme {
+                var isLoading by remember { mutableStateOf(false) }
+                var errorMessage by remember { mutableStateOf("") }
+
                 LoginScreen(
                     onLoginClick = { username, password ->
+                        if (username.isBlank() || password.isBlank()) {
+                            errorMessage = "Username and password cannot be empty"
+                            return@LoginScreen
+                        }
+
+                        isLoading = true
                         AuthManager.loginUser(this, username, password, object : AuthManager.AuthCallback {
                             override fun onSuccess(token: String) {
-                                // Save login state (optional if AuthManager already handles token)
-                                val sharedPref = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-                                sharedPref.edit().putBoolean("isLoggedIn", true).apply()
+                                isLoading = false
+                                errorMessage = ""
 
-                                Log.d("LoginActivity", "Login successful, navigating to HomeActivity")
+                                // Save login state and auth token
+                                val sharedPref = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                                sharedPref.edit()
+                                    .putBoolean("isLoggedIn", true)   // Save login state
+                                    .putString(PREF_TOKEN_KEY, token)  // Save auth token
+                                    .apply()
+
+                                Log.d("LoginActivity", "Login successful, token saved, navigating to HomeActivity")
+
                                 // Navigate to HomeActivity
                                 val intent = Intent(this@LoginActivity, Home::class.java)
                                 startActivity(intent)
@@ -54,24 +68,34 @@ class LoginActivity : ComponentActivity() {
                             }
 
                             override fun onFailure(errorMessage: String) {
-                                // Show error to user
-                                Toast.makeText(this@LoginActivity, errorMessage, Toast.LENGTH_LONG).show()
+                                isLoading = false
+                                Log.e("LoginActivity", "Login error: $errorMessage")
                             }
                         })
                     },
                     onSignUpClick = {
                         startActivity(Intent(this, SignUpActivity::class.java)) // Navigate to SignUpActivity
-                    }
+                    },
+                    isLoading = isLoading,
+                    errorMessage = errorMessage
                 )
             }
         }
     }
+
+    companion object {
+        const val PREFS_NAME = "AppPreferences"
+        const val PREF_TOKEN_KEY = "jwt_token"
+    }
 }
+
 
 @Composable
 fun LoginScreen(
     onLoginClick: (String, String) -> Unit,
-    onSignUpClick: () -> Unit
+    onSignUpClick: () -> Unit,
+    isLoading: Boolean,
+    errorMessage: String
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -81,7 +105,6 @@ fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
     ) {
-
         Image(
             painter = painterResource(id = R.drawable.login_image),
             contentDescription = "Background Image",
@@ -96,7 +119,6 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 text = "Login",
                 color = Color(0xFFE27239),
@@ -106,7 +128,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Username input field
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -116,7 +137,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Password input field with toggle for visibility
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -124,17 +144,22 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val image = if (passwordVisible)
-                        Icons.Default.Visibility
-                    else Icons.Default.VisibilityOff
-
+                    val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
                     }
                 }
             )
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (errorMessage.isNotEmpty()) {
+                Text(
+                    text = errorMessage,
+                    color = Color.Red,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
 
             Button(
                 onClick = { onLoginClick(username, password) },
@@ -145,11 +170,18 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .padding(vertical = 8.dp),
+                enabled = !isLoading
             ) {
-                Text(text = "Login", fontSize = 18.sp)
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                } else {
+                    Text(text = "Login", fontSize = 18.sp)
+                }
             }
 
-            // Sign Up button
             TextButton(
                 onClick = onSignUpClick,
                 colors = ButtonDefaults.textButtonColors(
@@ -158,7 +190,7 @@ fun LoginScreen(
                 ),
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
-                    .padding(vertical = 16.dp),
+                    .padding(vertical = 16.dp)
             ) {
                 Text(
                     text = "Don't have an account? Sign Up",

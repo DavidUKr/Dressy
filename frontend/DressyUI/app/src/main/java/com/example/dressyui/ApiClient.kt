@@ -8,7 +8,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
-    private const val BASE_URL = "https://dressy.onrender.com"
+    private const val BASE_URL = "https://dressy.onrender.com/"
 
     val retrofit: Retrofit by lazy {
         Retrofit.Builder()
@@ -20,7 +20,7 @@ object ApiClient {
     val authService: AuthService by lazy {
         retrofit.create(AuthService::class.java)
     }
-    // Function to provide OkHttpClient with interceptor
+
     private fun getOkHttpClient(token: String?): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor { chain: Interceptor.Chain ->
@@ -42,16 +42,4 @@ object ApiClient {
             .build()
         return retrofit.create(AuthService::class.java)
     }
-//    private const val BASE_URL = "https://dressy.onrender.com/"
-//
-//    val retrofit: Retrofit by lazy {
-//        Retrofit.Builder()
-//            .baseUrl(BASE_URL)
-//            .addConverterFactory(GsonConverterFactory.create())
-//            .build()
-//    }
-//
-//    val authService: AuthService by lazy {
-//        retrofit.create(AuthService::class.java)
-//    }
 }

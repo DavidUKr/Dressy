@@ -25,22 +25,26 @@ object AuthManager {
                 if (response.isSuccessful) {
                     val token = response.body()?.token
                     if (!token.isNullOrEmpty()) {
-                        // Save token securely
-                        val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+
+                        val sharedPreferences =
+                            context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
                         sharedPreferences.edit().putString("jwt_token", token).apply()
 
-                        // Notify success
                         callback.onSuccess(token)
                     } else {
-                        callback.onFailure("Failed to retrieve token.")
+                        callback.onFailure("Login failed: Invalid token received.")
                     }
                 } else {
-                    callback.onFailure("Login failed: ${response.message()}")
+                    callback.onFailure(
+                        "Login failed: ${
+                            response.errorBody()?.string() ?: response.message()
+                        }"
+                    )
                 }
             }
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                callback.onFailure("Error: ${t.message}")
+                callback.onFailure("Error: ${t.localizedMessage}")
             }
         })
     }

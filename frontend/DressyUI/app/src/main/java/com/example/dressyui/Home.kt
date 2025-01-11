@@ -85,11 +85,12 @@ class Home : ComponentActivity() {
 @Composable
 fun AppNavigation(isLoggedIn: Boolean) {
     val navController = rememberNavController()
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
     NavHost(
         navController = navController,
-        startDestination = if (isLoggedIn) "main" else "landing",
-
+        startDestination = if (isLoggedIn) "main" else "landing"
     ) {
         composable("landing") {
             LandingScreen(
@@ -97,27 +98,62 @@ fun AppNavigation(isLoggedIn: Boolean) {
                 onNavigateToSignup = { navController.navigate("signup") }
             )
         }
-        composable("your_outfits") {
-            YourOutfitsScreen(navController = navController)
-        }
+
         composable("login") {
+            // Pass the state values for loading and error message to the LoginScreen
             LoginScreen(
                 onLoginClick = { username, password ->
                     // Handle login logic
-                    navController.navigate("main")
+                    val loginSuccessful = true // Replace with actual login logic
+                    if (loginSuccessful) {
+                        navController.navigate("main") {
+                            popUpTo("login") { inclusive = true } // Clear login from back stack
+                        }
+                    } else {
+                        errorMessage = "Login failed" // Show error message on failure
+                    }
                 },
-                onSignUpClick = { navController.navigate("signup") }
+                onSignUpClick = { navController.navigate("signup") },
+                isLoading = isLoading,
+                errorMessage = errorMessage
             )
         }
-        composable("signup") {
 
+        composable("signup") {
+            SignUpScreen(
+                isLoading = isLoading, // Manage state here
+                errorMessage = errorMessage,
+                onSignUpClick = { username, email, password ->
+                    // Simulate signup logic here
+                    val signupSuccessful = true // Replace with actual signup logic
+                    if (signupSuccessful) {
+                        navController.navigate("login") {
+                            popUpTo("signup") { inclusive = true } // Clear signup from back stack
+                        }
+                    } else {
+                        errorMessage = "Signup failed" // Show error message
+                    }
+                },
+                onBackClick = {
+                    navController.popBackStack() // Go back to the landing screen
+                }
+            )
         }
+
         composable("main") {
             MainScreen(navController = navController)
         }
-    }
 
+        // Other Screens (e.g., Profile, Your Outfits)
+        composable("your_outfits") {
+            YourOutfitsScreen(navController = navController)
+        }
+        composable("profile") {
+            ProfileScreen(navController = navController)
+        }
+    }
 }
+
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -166,30 +202,7 @@ fun MainScreen(navController: NavController) {
                         )
                     }
 
-                    var menuExpanded by remember { mutableStateOf(false) }
-                    IconButton(onClick = { menuExpanded = true }) {
-                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Menu")
-                    }
-                    DropdownMenu(
-                        expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Your Outfits") },
-                            onClick = {
-                                menuExpanded = false
-                                navController.navigate("your_outfits")
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Category") },
-                            onClick = { menuExpanded = false }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Style") },
-                            onClick = { menuExpanded = false }
-                        )
-                    }
+
                 }
             )
         },
@@ -213,7 +226,7 @@ fun MainScreen(navController: NavController) {
                     Text(
                         text = "Select Image",
                         fontSize = 27.sp,
-                        color = Color(0xFFFEC5BB),
+                        color = Color(0xFFE27239),
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -244,7 +257,7 @@ fun MainScreen(navController: NavController) {
                             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                                 val bitmap = BitmapFactory.decodeStream(inputStream)
                                 val base64Image = encodeImageToBase64(bitmap)
-                                sendImageGenerationRequest(base64Image) { responseBitmap ->
+                                sendImageGenerationRequest(context, base64Image) { responseBitmap ->
                                     generatedImage = responseBitmap
                                 }
                             }
@@ -300,7 +313,6 @@ fun BottomNavigationBar(navController: NavController) {
             selected = navController.currentBackStackEntry?.destination?.route == "your_outfits",
             onClick = {
                 navController.navigate("your_outfits") {
-                    // Avoid multiple copies of the same destination
                     popUpTo(navController.graph.startDestinationId) { saveState = true }
                     launchSingleTop = true
                     restoreState = true
@@ -330,7 +342,7 @@ fun BottomNavigationBar(navController: NavController) {
         )
         NavigationBarItem(
             selected = false,
-            onClick = { navController.navigate("login") },
+            onClick = {  navController.navigate("profile")  },
             icon = {
                 Icon(
                     imageVector = Icons.Default.Person,
@@ -346,13 +358,24 @@ fun BottomNavigationBar(navController: NavController) {
 // Function to encode Bitmap to Base64
 fun encodeImageToBase64(bitmap: Bitmap): String {
     val byteArrayOutputStream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+    bitmap.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream)
     val byteArray = byteArrayOutputStream.toByteArray()
     return Base64.encodeToString(byteArray, Base64.DEFAULT)
 }
 
 // Function to send image generation request
-fun sendImageGenerationRequest(base64Image: String, onResult: (Bitmap) -> Unit) {
+fun sendImageGenerationRequest(context: Context, base64Image: String, onResult: (Bitmap) -> Unit) {
+    val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+    val token = sharedPref.getString("auth_token", null)
+
+    if (token.isNullOrEmpty()) {
+        Log.e("Auth", "Token missing or invalid.")
+        return
+    }
+    Log.d("Auth", "Token: $token")
+    Log.d("Request", "Sending request with base64 image of size: ${base64Image.length}")
+
+
     val request = ImageGenerationRequest(
         input_image = base64Image,
         style = "classic rock",
@@ -362,7 +385,7 @@ fun sendImageGenerationRequest(base64Image: String, onResult: (Bitmap) -> Unit) 
 
     CoroutineScope(Dispatchers.IO).launch {
         try {
-            val response = apiService.generateImage(request)
+            val response = apiService.generateImage(request, "Bearer $token")
             val decodedBytes = Base64.decode(response.generated_image, Base64.DEFAULT)
             val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
 
@@ -374,6 +397,7 @@ fun sendImageGenerationRequest(base64Image: String, onResult: (Bitmap) -> Unit) 
         }
     }
 }
+
 
 
 @Composable
