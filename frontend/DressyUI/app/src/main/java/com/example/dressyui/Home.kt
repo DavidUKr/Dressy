@@ -20,6 +20,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Favorite
@@ -27,6 +30,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,10 +41,13 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -53,6 +60,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
@@ -68,7 +76,6 @@ class Home : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Retrieve login status from SharedPreferences
         val sharedPref = getSharedPreferences("user_prefs", MODE_PRIVATE)
         val isLoggedIn = sharedPref.getBoolean("isLoggedIn", false)
 
@@ -82,91 +89,103 @@ class Home : ComponentActivity() {
     }
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun AppNavigation(isLoggedIn: Boolean) {
     val navController = rememberNavController()
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
-    NavHost(
-        navController = navController,
-        startDestination = if (isLoggedIn) "main" else "landing"
+    val bottomNavRoutes = listOf("main", "your_outfits", "profile")
+
+    Scaffold(
+        bottomBar = {
+            if (navController.currentBackStackEntry?.destination?.route in bottomNavRoutes) {
+                BottomNavigationBar(navController)
+            }
+        }
     ) {
-        composable("landing") {
-            LandingScreen(
-                onNavigateToLogin = { navController.navigate("login") },
-                onNavigateToSignup = { navController.navigate("signup") }
-            )
-        }
+        NavHost(
+            navController = navController,
+            startDestination = if (isLoggedIn) "main" else "landing",
+            modifier = Modifier.fillMaxSize()
+        ) {
+            composable("landing") {
+                LandingScreen(
+                    onNavigateToLogin = { navController.navigate("login") },
+                    onNavigateToSignup = { navController.navigate("signup") }
+                )
+            }
 
-        composable("login") {
-            // Pass the state values for loading and error message to the LoginScreen
-            LoginScreen(
-                onLoginClick = { username, password ->
-                    // Handle login logic
-                    val loginSuccessful = true // Replace with actual login logic
-                    if (loginSuccessful) {
-                        navController.navigate("main") {
-                            popUpTo("login") { inclusive = true } // Clear login from back stack
+            composable("login") {
+                LoginScreen(
+                    onLoginClick = { username, password ->
+                        val loginSuccessful = true
+                        if (loginSuccessful) {
+                            navController.navigate("main") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        } else {
+                            errorMessage = "Login failed"
                         }
-                    } else {
-                        errorMessage = "Login failed" // Show error message on failure
-                    }
-                },
-                onSignUpClick = { navController.navigate("signup") },
-                isLoading = isLoading,
-                errorMessage = errorMessage
-            )
-        }
+                    },
+                    onSignUpClick = { navController.navigate("signup") },
+                    isLoading = isLoading,
+                    errorMessage = errorMessage
+                )
+            }
 
-        composable("signup") {
-            SignUpScreen(
-                isLoading = isLoading, // Manage state here
-                errorMessage = errorMessage,
-                onSignUpClick = { username, email, password ->
-                    // Simulate signup logic here
-                    val signupSuccessful = true // Replace with actual signup logic
-                    if (signupSuccessful) {
-                        navController.navigate("login") {
-                            popUpTo("signup") { inclusive = true } // Clear signup from back stack
+            composable("signup") {
+                SignUpScreen(
+                    isLoading = isLoading,
+                    errorMessage = errorMessage,
+                    onSignUpClick = { username, email, password ->
+                        val signupSuccessful = true
+                        if (signupSuccessful) {
+                            navController.navigate("login") {
+                                popUpTo("signup") { inclusive = true }
+                            }
+                        } else {
+                            errorMessage = "Signup failed"
                         }
-                    } else {
-                        errorMessage = "Signup failed" // Show error message
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
                     }
-                },
-                onBackClick = {
-                    navController.popBackStack() // Go back to the landing screen
-                }
-            )
-        }
+                )
+            }
 
-        composable("main") {
-            MainScreen(navController = navController)
-        }
+            composable("main") {
+                MainScreen(navController = navController)
+            }
 
-        // Other Screens (e.g., Profile, Your Outfits)
-        composable("your_outfits") {
-            YourOutfitsScreen(navController = navController)
-        }
-        composable("profile") {
-            ProfileScreen(navController = navController)
+            composable("your_outfits") {
+                YourOutfitsScreen(navController = navController)
+            }
+
+            composable("profile") {
+                ProfileScreen(navController = navController)
+            }
         }
     }
 }
 
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(navController: NavController) {
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var generatedImage by remember { mutableStateOf<Bitmap?>(null) }
+    var userPrompt by remember { mutableStateOf("") }
     val context = LocalContext.current
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? -> selectedImageUri = uri }
     )
+
+    var selectedStyle by remember { mutableStateOf("Casual") }
+    val styles = listOf("Casual", "Formal", "Classic", "Chic")
 
     Scaffold(
         topBar = {
@@ -201,14 +220,13 @@ fun MainScreen(navController: NavController) {
                             contentScale = ContentScale.Crop
                         )
                     }
-
-
                 }
             )
         },
         bottomBar = {
             BottomNavigationBar(navController = navController)
         },
+        containerColor = Color(0xFFF8EDEB),
         content = { padding ->
             Box(
                 modifier = Modifier
@@ -221,15 +239,74 @@ fun MainScreen(navController: NavController) {
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = 20.dp)
+                        .padding(20.dp)
                 ) {
                     Text(
-                        text = "Select Image",
-                        fontSize = 27.sp,
+                        text = "Select Style",
+                        fontSize = 23.sp,
                         color = Color(0xFFE27239),
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Style Selection Bar
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                        items(styles) { style ->
+                            Button(
+                                onClick = { selectedStyle = style },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (selectedStyle == style) Color(0xFFE27239) else Color(0xFFa7a7a7),
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text(text = style)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = "Enter a Prompt",
+                        fontSize = 23.sp,
+                        color = Color(0xFFE27239),
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    TextField(
+                        value = userPrompt,
+                        onValueChange = { userPrompt = it },
+                        label = { Text("Tell us what you want") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .height(50.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        colors = TextFieldDefaults.textFieldColors(
+                            containerColor = Color.White,
+                            focusedIndicatorColor = Color(0xFFE27239),
+                            focusedLabelColor = Color(0xFFE27239),
+                            cursorColor = Color(0xFFE27239)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = "Select Image",
+                        fontSize = 23.sp,
+                        color = Color(0xFFE27239),
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     Image(
                         painter = if (selectedImageUri != null) {
@@ -246,7 +323,13 @@ fun MainScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Button(onClick = { imagePickerLauncher.launch("image/*") }) {
+                    Button(
+                        onClick = { imagePickerLauncher.launch("image/*") },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE27239),
+                            contentColor = Color.White
+                        )
+                    ) {
                         Text("Pick Image")
                     }
 
@@ -257,7 +340,7 @@ fun MainScreen(navController: NavController) {
                             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                                 val bitmap = BitmapFactory.decodeStream(inputStream)
                                 val base64Image = encodeImageToBase64(bitmap)
-                                sendImageGenerationRequest(context, base64Image) { responseBitmap ->
+                                sendImageGenerationRequest(context, base64Image, selectedStyle, userPrompt) { responseBitmap ->
                                     generatedImage = responseBitmap
                                 }
                             }
@@ -282,38 +365,75 @@ fun MainScreen(navController: NavController) {
         }
     )
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CompactTopAppBar(navController: NavController) {
+    TopAppBar(
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.dressy_logo),
+                    contentDescription = "App Logo",
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Welcome to Dressy!",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color(0xFFE27239),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        actions = {
+            IconButton(onClick = { navController.navigate("login") }) {
+                Image(
+                    painter = painterResource(id = R.drawable.user_icon),
+                    contentDescription = "Profile",
+                    modifier = Modifier.size(24.dp), // Reduced icon size
+                    contentScale = ContentScale.Crop
+                )
+            }
+        },
+        modifier = Modifier.height(56.dp)
+    )
+}
+
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
+    val currentRoute = navController.currentBackStackEntry?.destination?.route
+
     NavigationBar(
         containerColor = Color.White,
         contentColor = Color(0xFFFEC5BB)
     ) {
         NavigationBarItem(
-            selected = navController.currentBackStackEntry?.destination?.route == "main",
+            selected = currentRoute == "main",
             onClick = {
                 navController.navigate("main") {
-                    // Avoid multiple copies of the same destination
-                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                    popUpTo("main") { inclusive = true }
                     launchSingleTop = true
-                    restoreState = true
                 }
             },
             icon = {
                 Icon(
                     imageVector = Icons.Default.Home,
                     contentDescription = "Home",
-                    tint = if (navController.currentBackStackEntry?.destination?.route == "main")
-                        Color(0xFFFEC5BB) else Color.Gray
+                    tint = if (currentRoute == "main") Color(0xFFFEC5BB) else Color.Gray
                 )
             },
             label = { Text("Home") }
         )
         NavigationBarItem(
-            selected = navController.currentBackStackEntry?.destination?.route == "your_outfits",
+            selected = currentRoute == "your_outfits",
             onClick = {
                 navController.navigate("your_outfits") {
-                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                    popUpTo("main") { saveState = true }
                     launchSingleTop = true
                     restoreState = true
                 }
@@ -322,32 +442,25 @@ fun BottomNavigationBar(navController: NavController) {
                 Icon(
                     imageVector = Icons.Default.Favorite,
                     contentDescription = "Your Outfits",
-                    tint = if (navController.currentBackStackEntry?.destination?.route == "your_outfits")
-                        Color(0xFFFEC5BB) else Color.Gray
+                    tint = if (currentRoute == "your_outfits") Color(0xFFFEC5BB) else Color.Gray
                 )
             },
             label = { Text("Favorites") }
         )
         NavigationBarItem(
-            selected = false,
-            onClick = { /* Navigate to Camera */ },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.CameraAlt,
-                    contentDescription = "Camera",
-                    tint = Color.Gray
-                )
+            selected = currentRoute == "profile",
+            onClick = {
+                navController.navigate("profile") {
+                    popUpTo("main") { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             },
-            label = { Text("Camera") }
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {  navController.navigate("profile")  },
             icon = {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "Profile",
-                    tint = Color.Gray
+                    tint = if (currentRoute == "profile") Color(0xFFFEC5BB) else Color.Gray
                 )
             },
             label = { Text("Profile") }
@@ -364,7 +477,14 @@ fun encodeImageToBase64(bitmap: Bitmap): String {
 }
 
 // Function to send image generation request
-fun sendImageGenerationRequest(context: Context, base64Image: String, onResult: (Bitmap) -> Unit) {
+fun sendImageGenerationRequest(
+    context: Context,
+    base64Image: String,
+    selectedStyle: String,
+    userPrompt: String,
+    onResult: (Bitmap) -> Unit
+) {
+
     val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
     val token = sharedPref.getString("auth_token", null)
 
@@ -375,11 +495,10 @@ fun sendImageGenerationRequest(context: Context, base64Image: String, onResult: 
     Log.d("Auth", "Token: $token")
     Log.d("Request", "Sending request with base64 image of size: ${base64Image.length}")
 
-
     val request = ImageGenerationRequest(
         input_image = base64Image,
-        style = "classic rock",
-        user_prompt = "Casual",
+        style = selectedStyle,
+        user_prompt = userPrompt, // Use the user prompt
         results_count = 1
     )
 
@@ -397,8 +516,6 @@ fun sendImageGenerationRequest(context: Context, base64Image: String, onResult: 
         }
     }
 }
-
-
 
 @Composable
 fun GeneratedImagesSection(generatedOutfits: List<String>, context: Context) {
