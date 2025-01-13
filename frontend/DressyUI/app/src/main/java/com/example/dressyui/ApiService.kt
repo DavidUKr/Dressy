@@ -16,7 +16,7 @@
 //
 //interface ApiService {
 //    @Multipart
-//    @POST("generate-outfit") // Replace with your endpoint
+//    @POST("generate-outfit")
 //    suspend fun generateImage(
 //        @Part("style") style: RequestBody,
 //        @Part("user_prompt") userPrompt: RequestBody,

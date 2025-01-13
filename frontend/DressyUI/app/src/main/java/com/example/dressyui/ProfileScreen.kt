@@ -1,21 +1,31 @@
 package com.example.dressyui
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +42,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -43,71 +55,175 @@ import androidx.navigation.NavController
 fun ProfileScreen(navController: NavController) {
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(
-                    text = "Profile",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color(0xFFE27239),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 10.dp)) },
-                )
-        },bottomBar = {
+            TopAppBar(
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Profile",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = Color(0xFFE27239),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            )
+        },
+        bottomBar = {
             BottomNavigationBar(navController)
         }
-
-    ) {
-        Column(
+    ) { innerPadding ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .background(Color(0xFFF8EDEB))
+                .padding(innerPadding)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Avatar",
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.primary
-
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(text = "User Name", style = MaterialTheme.typography.headlineSmall)
-                    Text(text = "user.name@gmail.com", style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-
-
-            Button(
-                onClick = {
-                    navController.navigate("editProfile")
-                },
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
             ) {
-                Text(text = "Edit Profile")
-            }
 
-            // Preferences Section
-            Text(text = "Preferences", style = MaterialTheme.typography.headlineSmall)
-            PreferencesSwitch("Push notifications", true)
-            PreferencesSwitch("Face ID", true)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFF8EDEB)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Avatar",
+                                modifier = Modifier.size(64.dp),
+                                tint = Color(0xFFE27239)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Sally Robins",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF333333)
+                        )
+
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            StatisticItem(label = "Images generated", value = "5")
+                            StatisticItem(label = "Saved", value = "3")
+                            StatisticItem(label = "Styles used", value = "3")
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Total Statistics",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF333333)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                StatisticRow(
+                    label = "Images generated",
+                    value = "5",
+                    icon = Icons.Default.CheckCircle,
+                    color = Color(0xFF6BCB77)
+                )
+//                StatisticRow(
+//                    label = "Hours Learned",
+//                    value = "56",
+//                    icon = Icons.Default.Timer,
+//                    color = Color(0xFFF4A261)
+//                )
+                StatisticRow(
+                    label = "Saved Images",
+                    value = "3",
+                    icon = Icons.Default.Star,
+                    color = Color(0xFF2A9D8F)
+                )
+            }
         }
     }
 }
 
 @Composable
-fun PreferencesSwitch(label: String, defaultState: Boolean) {
-    var state by remember { mutableStateOf(defaultState) }
+fun StatisticItem(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFFE27239)
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFF666666)
+        )
+    }
+}
+
+@Composable
+fun StatisticRow(label: String, value: String, icon: ImageVector, color: Color) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label)
-        Switch(
-            checked = state,
-            onCheckedChange = { state = it }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF333333)
+            )
+        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = color
         )
     }
 }

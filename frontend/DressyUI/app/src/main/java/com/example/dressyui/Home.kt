@@ -239,7 +239,7 @@ fun MainScreen(navController: NavController) {
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(20.dp)
+                        .padding(10.dp)
                 ) {
                     Text(
                         text = "Select Style",
@@ -250,7 +250,6 @@ fun MainScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Style Selection Bar
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.padding(horizontal = 16.dp)
@@ -337,21 +336,29 @@ fun MainScreen(navController: NavController) {
 
                     selectedImageUri?.let { uri ->
                         Button(onClick = {
-                            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                                val bitmap = BitmapFactory.decodeStream(inputStream)
-                                val base64Image = encodeImageToBase64(bitmap)
-                                sendImageGenerationRequest(context, base64Image, selectedStyle, userPrompt) { responseBitmap ->
-                                    generatedImage = responseBitmap
+                                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                                    val bitmap = BitmapFactory.decodeStream(inputStream)
+                                    val base64Image = encodeImageToBase64(bitmap)
+                                    sendImageGenerationRequest(
+                                        context,
+                                        base64Image,
+                                        selectedStyle,
+                                        userPrompt
+                                    ) { responseBitmap ->
+                                        generatedImage = responseBitmap
+                                    }
                                 }
-                            }
-                        }) {
+                            },
+                                colors = ButtonDefaults . buttonColors (
+                                containerColor = Color(0xFFE27239),
+                                contentColor = Color.White)
+                        ){
                             Text("Generate Image")
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Display generated image if available
                     generatedImage?.let { bitmap ->
                         Text("Generated Image:")
                         Image(
@@ -363,43 +370,6 @@ fun MainScreen(navController: NavController) {
                 }
             }
         }
-    )
-}
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CompactTopAppBar(navController: NavController) {
-    TopAppBar(
-        title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.dressy_logo),
-                    contentDescription = "App Logo",
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Welcome to Dressy!",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color(0xFFE27239),
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = { navController.navigate("login") }) {
-                Image(
-                    painter = painterResource(id = R.drawable.user_icon),
-                    contentDescription = "Profile",
-                    modifier = Modifier.size(24.dp), // Reduced icon size
-                    contentScale = ContentScale.Crop
-                )
-            }
-        },
-        modifier = Modifier.height(56.dp)
     )
 }
 
