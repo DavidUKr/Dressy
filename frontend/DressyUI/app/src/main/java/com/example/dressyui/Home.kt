@@ -118,16 +118,38 @@ fun AppNavigation(isLoggedIn: Boolean) {
             }
 
             composable("login") {
+                var isLoading by remember { mutableStateOf(false) }
+                var errorMessage by remember { mutableStateOf("") }
+                val context = LocalContext.current
+
                 LoginScreen(
                     onLoginClick = { username, password ->
-                        val loginSuccessful = true
-                        if (loginSuccessful) {
-                            navController.navigate("main") {
-                                popUpTo("login") { inclusive = true }
-                            }
-                        } else {
-                            errorMessage = "Login failed"
+                        if (username.isBlank() || password.isBlank()) {
+                            errorMessage = "Username and password cannot be empty"
+                            return@LoginScreen
                         }
+
+                        isLoading = true
+                        errorMessage = ""
+
+                        AuthManager.loginUser(
+                            context = context,
+                            username = username,
+                            password = password,
+                            callback = object : AuthManager.AuthCallback {
+                                override fun onSuccess(token: String) {
+                                    isLoading = false
+                                    navController.navigate("main") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                }
+
+                                override fun onFailure(error: String) {
+                                    isLoading = false
+                                    errorMessage = error
+                                }
+                            }
+                        )
                     },
                     onSignUpClick = { navController.navigate("signup") },
                     isLoading = isLoading,
@@ -162,7 +184,7 @@ fun AppNavigation(isLoggedIn: Boolean) {
             composable("your_outfits") {
                 YourOutfitsScreen(navController = navController)
             }
-
+            
             composable("profile") {
                 ProfileScreen(navController = navController)
             }
@@ -377,6 +399,19 @@ fun MainScreen(navController: NavController) {
 @Composable
 fun BottomNavigationBar(navController: NavController) {
     val currentRoute = navController.currentBackStackEntry?.destination?.route
+    val context = LocalContext.current
+
+    // Define the launcher for the camera
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap ->
+        if (bitmap != null) {
+            // Handle the bitmap (e.g., display it or save it)
+            Toast.makeText(context, "Picture taken!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Camera canceled", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     NavigationBar(
         containerColor = Color.White,
@@ -416,6 +451,20 @@ fun BottomNavigationBar(navController: NavController) {
                 )
             },
             label = { Text("Favorites") }
+        )
+        NavigationBarItem(
+            selected = false, // No specific route for the camera
+            onClick = {
+                cameraLauncher.launch(null) // Launch the camera when the item is clicked
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.CameraAlt,
+                    contentDescription = "Camera",
+                    tint = Color.Gray
+                )
+            },
+            label = { Text("Camera") }
         )
         NavigationBarItem(
             selected = currentRoute == "profile",

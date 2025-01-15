@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
@@ -63,13 +64,19 @@ fun YourOutfitsScreen(navController: NavController) {
         topBar = {
             TopAppBar(
                 title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    {
                     Text(
                         text = "Your Outfits",
                         style = MaterialTheme.typography.titleLarge,
                         color = Color(0xFFE27239),
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 10.dp)
-                    )
+                    ) }
                 }
             )
         },

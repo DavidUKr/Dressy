@@ -13,11 +13,28 @@ import retrofit2.Callback
 import retrofit2.Response
 
 object AuthManager {
+
     interface AuthCallback {
         fun onSuccess(token: String)
         fun onFailure(errorMessage: String)
     }
 
+    private const val PREFS_NAME = "AppPreferences"
+    private const val TOKEN_KEY = "jwt_token"
+
+    // Save token to SharedPreferences
+    private fun saveToken(context: Context, token: String) {
+        val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        sharedPreferences.edit().putString(TOKEN_KEY, token).apply()
+    }
+
+    // Retrieve token from SharedPreferences
+    fun getToken(context: Context): String? {
+        val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return sharedPreferences.getString(TOKEN_KEY, null)
+    }
+
+    // Login user
     fun loginUser(context: Context, username: String, password: String, callback: AuthCallback) {
         val loginRequest = LoginRequest(username, password)
         ApiClient.authService.login(loginRequest).enqueue(object : Callback<LoginResponse> {
@@ -25,21 +42,13 @@ object AuthManager {
                 if (response.isSuccessful) {
                     val token = response.body()?.token
                     if (!token.isNullOrEmpty()) {
-
-                        val sharedPreferences =
-                            context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-                        sharedPreferences.edit().putString("jwt_token", token).apply()
-
-                        callback.onSuccess(token)
+                        saveToken(context, token) // Save the token
+                        callback.onSuccess(token) // Notify success
                     } else {
                         callback.onFailure("Login failed: Invalid token received.")
                     }
                 } else {
-                    callback.onFailure(
-                        "Login failed: ${
-                            response.errorBody()?.string() ?: response.message()
-                        }"
-                    )
+                    callback.onFailure("Login failed: ${response.errorBody()?.string() ?: response.message()}")
                 }
             }
 
@@ -48,33 +57,32 @@ object AuthManager {
             }
         })
     }
+
+//    fun fetchProtectedData(context: Context, callback: AuthCallback) {
+//        val token = getToken(context)
+//        if (token != null) {
+//            val authService = ApiClient.createAuthService(token)
+//            authService.getUserProfile().enqueue(object : Callback<UserProfileResponse> {
+//                override fun onResponse(call: Call<UserProfileResponse>, response: Response<UserProfileResponse>) {
+//                    if (response.isSuccessful) {
+//                        val userProfile = response.body()
+//                        if (userProfile != null) {
+//                            callback.onSuccess("Fetched profile: ${userProfile.username}")
+//                        } else {
+//                            callback.onFailure("Failed to fetch profile: Empty response.")
+//                        }
+//                    } else {
+//                        callback.onFailure("Failed to fetch profile: ${response.errorBody()?.string() ?: response.message()}")
+//                    }
+//                }
+//
+//                override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
+//                    callback.onFailure("Error: ${t.localizedMessage}")
+//                }
+//            })
+//        } else {
+//            callback.onFailure("User not authenticated. Please log in.")
+//        }
+//    }
 }
-
-    fun fetchProtectedData(context: Context) {
-        val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        val token = sharedPreferences.getString("jwt_token", null)
-
-        if (token != null) {
-            val authService = ApiClient.createAuthService(token)
-            // Use authService for making authenticated requests, e.g., fetching user profile, etc.
-        } else {
-            Toast.makeText(context, "User not authenticated", Toast.LENGTH_SHORT).show()
-        }
-    }
-    fun registerUser(context: Context, username: String, email: String, password: String) {
-        val signupRequest = SignupRequest(username, email, password)
-        ApiClient.authService.signup(signupRequest).enqueue(object : Callback<SignupResponse> {
-            override fun onResponse(call: Call<SignupResponse>, response: Response<SignupResponse>) {
-                if (response.isSuccessful) {
-                    Toast.makeText(context, "Registration successful: ${response.body()?.message}", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, "Registration failed: ${response.message()}", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            override fun onFailure(call: Call<SignupResponse>, t: Throwable) {
-                Toast.makeText(context, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
-            }
-        })
-    }
 

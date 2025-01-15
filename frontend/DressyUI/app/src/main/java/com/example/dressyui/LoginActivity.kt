@@ -32,6 +32,7 @@ import com.example.dressyui.ui.theme.DressyUITheme
 
 
 class LoginActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -47,21 +48,14 @@ class LoginActivity : ComponentActivity() {
                         }
 
                         isLoading = true
+                        errorMessage = ""
                         AuthManager.loginUser(this, username, password, object : AuthManager.AuthCallback {
                             override fun onSuccess(token: String) {
                                 isLoading = false
                                 errorMessage = ""
 
-                                // Save login state and auth token
-                                val sharedPref = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                                sharedPref.edit()
-                                    .putBoolean("isLoggedIn", true)   // Save login state
-                                    .putString(PREF_TOKEN_KEY, token)  // Save auth token
-                                    .apply()
+                                Log.d("LoginActivity", "Login successful, navigating to HomeActivity")
 
-                                Log.d("LoginActivity", "Login successful, token saved, navigating to HomeActivity")
-
-                                // Navigate to HomeActivity
                                 val intent = Intent(this@LoginActivity, Home::class.java)
                                 startActivity(intent)
                                 finish()
@@ -74,7 +68,7 @@ class LoginActivity : ComponentActivity() {
                         })
                     },
                     onSignUpClick = {
-                        startActivity(Intent(this, SignUpActivity::class.java)) // Navigate to SignUpActivity
+                        startActivity(Intent(this, SignUpActivity::class.java))
                     },
                     isLoading = isLoading,
                     errorMessage = errorMessage
@@ -88,7 +82,6 @@ class LoginActivity : ComponentActivity() {
         const val PREF_TOKEN_KEY = "jwt_token"
     }
 }
-
 
 @Composable
 fun LoginScreen(
