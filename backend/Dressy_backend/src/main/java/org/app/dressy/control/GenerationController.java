@@ -22,7 +22,7 @@ public class GenerationController {
         return generationService.getGenerationById(id);
     }
 
-    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<GenerationDTO> getGenerationImages(@RequestBody QueryDTO queryDTO){
         return ResponseEntity.ok(generationService.getGenerationImages(queryDTO));
     }
