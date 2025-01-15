@@ -31,7 +31,6 @@ class SignUpActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DressyUITheme {
-                // Local state for signup
                 var isLoading by remember { mutableStateOf(false) }
                 var errorMessage by remember { mutableStateOf("") }
 
@@ -39,45 +38,37 @@ class SignUpActivity : ComponentActivity() {
                     isLoading = isLoading,
                     errorMessage = errorMessage,
                     onSignUpClick = { username, email, password ->
-                        // Update UI state
                         isLoading = true
                         errorMessage = ""
 
-                        // Prepare API request
                         val request = SignupRequest(username, email, password)
 
-                        ApiClient.authService.signup(request).enqueue(object : retrofit2.Callback<SignupResponse> {
-                            override fun onResponse(
-                                call: retrofit2.Call<SignupResponse>,
-                                response: retrofit2.Response<SignupResponse>
-                            ) {
-                                isLoading = false
-                                if (response.isSuccessful) {
-                                    val signupResponse = response.body()
-                                    signupResponse?.let {
-                                        Toast.makeText(
-                                            this@SignUpActivity,
-                                            "Signup Successful: ${it.message}",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                        // Navigate back to login
-                                        startActivity(Intent(this@SignUpActivity, LoginActivity::class.java))
-                                        finish()
-                                    }
-                                } else {
-                                    // Show error message
-                                    errorMessage = "Signup Failed: ${response.message()}"
+                        AuthManager.signupUser(
+                            context = this@SignUpActivity,
+                            username = username,
+                            email = email,
+                            password = password,
+                            callback = object : AuthManager.AuthCallback {
+                                override fun onSuccess(message: String) {
+                                    isLoading = false
+                                    Toast.makeText(
+                                        this@SignUpActivity,
+                                        "Signup Successful: $message",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+
+                                    // Navigate to login screen
+                                    startActivity(Intent(this@SignUpActivity, LoginActivity::class.java))
+                                    finish()
+                                }
+
+                                override fun onFailure(errorMessage: String) {
+                                    isLoading = false
                                 }
                             }
-
-                            override fun onFailure(call: retrofit2.Call<SignupResponse>, t: Throwable) {
-                                isLoading = false
-                                errorMessage = "Error: ${t.message}"
-                            }
-                        })
+                        )
                     },
                     onBackClick = {
-                        // Navigate back to login
                         startActivity(Intent(this, LoginActivity::class.java))
                         finish()
                     }
@@ -100,7 +91,6 @@ fun SignUpScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    // Validation states
     var isUsernameValid by remember { mutableStateOf(true) }
     var isEmailValid by remember { mutableStateOf(true) }
     var isPasswordValid by remember { mutableStateOf(true) }
@@ -108,7 +98,6 @@ fun SignUpScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Background Image
         Image(
             painter = painterResource(id = R.drawable.login_image),
             contentDescription = "Background Image",
@@ -123,7 +112,6 @@ fun SignUpScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Title
             Text(
                 text = "Sign Up",
                 color = Color(0xFFE27239),
@@ -133,7 +121,6 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Error Message
             if (errorMessage.isNotEmpty()) {
                 Text(
                     text = errorMessage,
@@ -143,7 +130,6 @@ fun SignUpScreen(
                 )
             }
 
-            // Username Input
             OutlinedTextField(
                 value = username,
                 onValueChange = {
@@ -166,7 +152,6 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Email Input
             OutlinedTextField(
                 value = email,
                 onValueChange = {
@@ -189,7 +174,6 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Password Input
             OutlinedTextField(
                 value = password,
                 onValueChange = {
@@ -246,9 +230,12 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Back to Login Button
             TextButton(
                 onClick = onBackClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFD7A685),
+                    contentColor = Color.White
+                ),
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .padding(vertical = 16.dp),

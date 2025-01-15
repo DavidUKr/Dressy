@@ -34,7 +34,6 @@ object AuthManager {
         return sharedPreferences.getString(TOKEN_KEY, null)
     }
 
-    // Login user
     fun loginUser(context: Context, username: String, password: String, callback: AuthCallback) {
         val loginRequest = LoginRequest(username, password)
         ApiClient.authService.login(loginRequest).enqueue(object : Callback<LoginResponse> {
@@ -42,8 +41,8 @@ object AuthManager {
                 if (response.isSuccessful) {
                     val token = response.body()?.token
                     if (!token.isNullOrEmpty()) {
-                        saveToken(context, token) // Save the token
-                        callback.onSuccess(token) // Notify success
+                        saveToken(context, token)
+                        callback.onSuccess(token)
                     } else {
                         callback.onFailure("Login failed: Invalid token received.")
                     }
@@ -53,6 +52,28 @@ object AuthManager {
             }
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                callback.onFailure("Error: ${t.localizedMessage}")
+            }
+        })
+    }
+
+    fun signupUser(context: Context, username: String, email: String, password: String, callback: AuthCallback) {
+        val signupRequest = SignupRequest(username, email, password)
+        ApiClient.authService.signup(signupRequest).enqueue(object : Callback<SignupResponse> {
+            override fun onResponse(call: Call<SignupResponse>, response: Response<SignupResponse>) {
+                if (response.isSuccessful) {
+                    val message = response.body()?.message
+                    if (!message.isNullOrEmpty()) {
+                        callback.onSuccess(message)
+                    } else {
+                        callback.onFailure("Signup failed: Invalid response received.")
+                    }
+                } else {
+                    callback.onFailure("Signup failed: ${response.errorBody()?.string() ?: response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<SignupResponse>, t: Throwable) {
                 callback.onFailure("Error: ${t.localizedMessage}")
             }
         })

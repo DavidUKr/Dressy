@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -64,6 +65,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import com.example.dressyui.AuthManager.getToken
 import com.example.dressyui.ui.theme.DressyUITheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -158,24 +160,46 @@ fun AppNavigation(isLoggedIn: Boolean) {
             }
 
             composable("signup") {
+                val context = LocalContext.current
                 SignUpScreen(
                     isLoading = isLoading,
                     errorMessage = errorMessage,
                     onSignUpClick = { username, email, password ->
-                        val signupSuccessful = true
-                        if (signupSuccessful) {
-                            navController.navigate("login") {
-                                popUpTo("signup") { inclusive = true }
+                        isLoading = true
+                        errorMessage = ""
+
+                        AuthManager.signupUser(
+                            context = context,
+                            username = username,
+                            email = email,
+                            password = password,
+                            callback = object : AuthManager.AuthCallback {
+                                override fun onSuccess(message: String) {
+                                    isLoading = false
+                                    Toast.makeText(
+                                        context,
+                                        "Signup Successful: $message",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+
+                                    navController.navigate("login") {
+                                        popUpTo("signup") { inclusive = true }
+                                    }
+                                }
+
+                                override fun onFailure(errorMessage: String) {
+                                    isLoading = false
+                                    //this@composable.errorMessage = errorMessage
+                                }
                             }
-                        } else {
-                            errorMessage = "Signup failed"
-                        }
+                        )
                     },
                     onBackClick = {
                         navController.popBackStack()
                     }
                 )
             }
+
 
             composable("main") {
                 MainScreen(navController = navController)
@@ -200,7 +224,7 @@ fun MainScreen(navController: NavController) {
     var generatedImage by remember { mutableStateOf<Bitmap?>(null) }
     var userPrompt by remember { mutableStateOf("") }
     val context = LocalContext.current
-
+    var isLoading by remember { mutableStateOf(false) }
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? -> selectedImageUri = uri }
@@ -357,10 +381,15 @@ fun MainScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     selectedImageUri?.let { uri ->
-                        Button(onClick = {
+                        Button(
+                            onClick = {
+                                isLoading = true
                                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                                    val bitmap = BitmapFactory.decodeStream(inputStream)
-                                    val base64Image = encodeImageToBase64(bitmap)
+                                    val originalBitmap = BitmapFactory.decodeStream(inputStream)
+                                    val resizedBitmap = resizeBitmap(originalBitmap, 512, 512)
+                                    val base64Image = encodeImageToBase64(resizedBitmap)
+
+                                    // Trigger image generation with request
                                     sendImageGenerationRequest(
                                         context,
                                         base64Image,
@@ -368,14 +397,26 @@ fun MainScreen(navController: NavController) {
                                         userPrompt
                                     ) { responseBitmap ->
                                         generatedImage = responseBitmap
+                                        isLoading = false
                                     }
+                                } ?: run {
+                                    isLoading = false
+                                    Toast.makeText(context, "Failed to load image.", Toast.LENGTH_SHORT).show()
                                 }
                             },
-                                colors = ButtonDefaults . buttonColors (
+                            colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFFE27239),
-                                contentColor = Color.White)
-                        ){
-                            Text("Generate Image")
+                                contentColor = Color.White
+                            )
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = Color.White
+                                )
+                            } else {
+                                Text("Generate Image")
+                            }
                         }
                     }
 
@@ -385,7 +426,7 @@ fun MainScreen(navController: NavController) {
                         Text("Generated Image:")
                         Image(
                             bitmap = bitmap.asImageBitmap(),
-                            contentDescription = null,
+                            contentDescription = "Generated Image",
                             modifier = Modifier.size(200.dp)
                         )
                     }
@@ -395,18 +436,64 @@ fun MainScreen(navController: NavController) {
     )
 }
 
+fun encodeImageToBase64(bitmap: Bitmap): String {
+    val byteArrayOutputStream = ByteArrayOutputStream()
+    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+    val byteArray = byteArrayOutputStream.toByteArray()
+    return Base64.encodeToString(byteArray, Base64.NO_WRAP)
+}
+
+fun sendImageGenerationRequest(
+    context: Context,
+    base64Image: String,
+    selectedStyle: String,
+    userPrompt: String,
+    onResult: (Bitmap) -> Unit
+) {
+    val token = getToken(context)
+    if (token.isNullOrEmpty()) {
+        Log.e("Auth", "Token missing or invalid.")
+        return
+    }
+
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val request = ImageGenerationRequest(
+                input_image = base64Image,
+                style = selectedStyle,
+                user_prompt = userPrompt,
+                results_count = 1
+            )
+
+            val response = apiService.generateImage(request, "Bearer $token")
+
+
+            val base64ImageResponse = response.generated_image
+            val decodedBytes = Base64.decode(base64ImageResponse, Base64.DEFAULT)
+            val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+
+            withContext(Dispatchers.Main) {
+                onResult(bitmap)
+            }
+        } catch (e: Exception) {
+            Log.e("ImageGeneration", "Error: ${e.message}")
+        }
+    }
+}
+
+fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
+    return Bitmap.createScaledBitmap(bitmap, width, height, true)
+}
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
     val currentRoute = navController.currentBackStackEntry?.destination?.route
     val context = LocalContext.current
 
-    // Define the launcher for the camera
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
         if (bitmap != null) {
-            // Handle the bitmap (e.g., display it or save it)
             Toast.makeText(context, "Picture taken!", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(context, "Camera canceled", Toast.LENGTH_SHORT).show()
@@ -453,9 +540,9 @@ fun BottomNavigationBar(navController: NavController) {
             label = { Text("Favorites") }
         )
         NavigationBarItem(
-            selected = false, // No specific route for the camera
+            selected = false,
             onClick = {
-                cameraLauncher.launch(null) // Launch the camera when the item is clicked
+                cameraLauncher.launch(null)
             },
             icon = {
                 Icon(
@@ -487,54 +574,6 @@ fun BottomNavigationBar(navController: NavController) {
     }
 }
 
-// Function to encode Bitmap to Base64
-fun encodeImageToBase64(bitmap: Bitmap): String {
-    val byteArrayOutputStream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream)
-    val byteArray = byteArrayOutputStream.toByteArray()
-    return Base64.encodeToString(byteArray, Base64.DEFAULT)
-}
-
-// Function to send image generation request
-fun sendImageGenerationRequest(
-    context: Context,
-    base64Image: String,
-    selectedStyle: String,
-    userPrompt: String,
-    onResult: (Bitmap) -> Unit
-) {
-
-    val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-    val token = sharedPref.getString("auth_token", null)
-
-    if (token.isNullOrEmpty()) {
-        Log.e("Auth", "Token missing or invalid.")
-        return
-    }
-    Log.d("Auth", "Token: $token")
-    Log.d("Request", "Sending request with base64 image of size: ${base64Image.length}")
-
-    val request = ImageGenerationRequest(
-        input_image = base64Image,
-        style = selectedStyle,
-        user_prompt = userPrompt, // Use the user prompt
-        results_count = 1
-    )
-
-    CoroutineScope(Dispatchers.IO).launch {
-        try {
-            val response = apiService.generateImage(request, "Bearer $token")
-            val decodedBytes = Base64.decode(response.generated_image, Base64.DEFAULT)
-            val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-
-            withContext(Dispatchers.Main) {
-                onResult(bitmap)
-            }
-        } catch (e: Exception) {
-            Log.e("ImageGeneration", "Error: ${e.message}")
-        }
-    }
-}
 
 @Composable
 fun GeneratedImagesSection(generatedOutfits: List<String>, context: Context) {
