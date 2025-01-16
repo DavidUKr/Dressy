@@ -113,7 +113,7 @@ fun ProfileScreen(navController: NavController) {
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Sally Robins",
+                            text = "App Demo",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF333333)
@@ -138,9 +138,9 @@ fun ProfileScreen(navController: NavController) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            StatisticItem(label = "Images generated", value = "5")
-                            StatisticItem(label = "Saved", value = "3")
-                            StatisticItem(label = "Styles used", value = "3")
+                            StatisticItem(label = "Images generated", value = "3")
+                            StatisticItem(label = "Saved", value = "2")
+                            StatisticItem(label = "Styles used", value = "2")
                         }
                     }
                 }
@@ -158,7 +158,7 @@ fun ProfileScreen(navController: NavController) {
 
                 StatisticRow(
                     label = "Images generated",
-                    value = "5",
+                    value = "3",
                     icon = Icons.Default.CheckCircle,
                     color = Color(0xFF6BCB77)
                 )
@@ -170,7 +170,7 @@ fun ProfileScreen(navController: NavController) {
 //                )
                 StatisticRow(
                     label = "Saved Images",
-                    value = "3",
+                    value = "2",
                     icon = Icons.Default.Star,
                     color = Color(0xFF2A9D8F)
                 )

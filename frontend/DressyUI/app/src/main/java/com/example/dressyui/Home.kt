@@ -208,7 +208,7 @@ fun AppNavigation(isLoggedIn: Boolean) {
             composable("your_outfits") {
                 YourOutfitsScreen(navController = navController)
             }
-            
+
             composable("profile") {
                 ProfileScreen(navController = navController)
             }
@@ -389,7 +389,6 @@ fun MainScreen(navController: NavController) {
                                     val resizedBitmap = resizeBitmap(originalBitmap, 512, 512)
                                     val base64Image = encodeImageToBase64(resizedBitmap)
 
-                                    // Trigger image generation with request
                                     sendImageGenerationRequest(
                                         context,
                                         base64Image,
@@ -442,19 +441,20 @@ fun encodeImageToBase64(bitmap: Bitmap): String {
     val byteArray = byteArrayOutputStream.toByteArray()
     return Base64.encodeToString(byteArray, Base64.NO_WRAP)
 }
-
 fun sendImageGenerationRequest(
     context: Context,
     base64Image: String,
     selectedStyle: String,
     userPrompt: String,
-    onResult: (Bitmap) -> Unit
+    onResult: (Bitmap?) -> Unit
 ) {
     val token = getToken(context)
     if (token.isNullOrEmpty()) {
         Log.e("Auth", "Token missing or invalid.")
         return
     }
+
+    val apiService = ApiClient.getRetrofitWithToken(token).create(ApiService::class.java)
 
     CoroutineScope(Dispatchers.IO).launch {
         try {
@@ -465,8 +465,7 @@ fun sendImageGenerationRequest(
                 results_count = 1
             )
 
-            val response = apiService.generateImage(request, "Bearer $token")
-
+            val response = com.example.dressyui.apiService.generateImage(request, "Bearer $token")
 
             val base64ImageResponse = response.generated_image
             val decodedBytes = Base64.decode(base64ImageResponse, Base64.DEFAULT)
@@ -477,9 +476,14 @@ fun sendImageGenerationRequest(
             }
         } catch (e: Exception) {
             Log.e("ImageGeneration", "Error: ${e.message}")
+            withContext(Dispatchers.Main) {
+                onResult(null)
+                Toast.makeText(context, "Failed to generate image: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
+
 
 fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
     return Bitmap.createScaledBitmap(bitmap, width, height, true)
